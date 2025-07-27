@@ -39,3 +39,32 @@
 
 # debug information files
 *.dwo
+/.vs/Sudoku/CopilotIndices/17.14.878.3237/CodeChunks.db
+/.vs/Sudoku/CopilotIndices/17.14.878.3237/CodeChunks.db-shm
+/.vs/Sudoku/CopilotIndices/17.14.878.3237/CodeChunks.db-wal
+/.vs/Sudoku/CopilotIndices/17.14.878.3237/SemanticSymbols.db
+/.vs/Sudoku/CopilotIndices/17.14.878.3237/SemanticSymbols.db-shm
+/.vs/Sudoku/CopilotIndices/17.14.878.3237/SemanticSymbols.db-wal
+/.vs/Sudoku/FileContentIndex/3f948f66-3d86-4a95-ba22-5a2779d9e293.vsidx
+/.vs/Sudoku/FileContentIndex/8fbf61e9-f6cf-4f9c-a462-ff00c7f8394e.vsidx
+/.vs/Sudoku/v17/.suo
+/.vs/Sudoku/v17/Browse.VC.db
+/.vs/Sudoku/v17/Browse.VC.db-shm
+/.vs/Sudoku/v17/Browse.VC.db-wal
+/.vs/Sudoku/v17/Browse.VC.opendb
+/.vs/Sudoku/v17/DocumentLayout.backup.json
+/.vs/Sudoku/v17/DocumentLayout.json
+/.vs/Sudoku/v17/ipch/AutoPCH/3117c1f5baa47acf/MAIN.ipch
+/.vs/Sudoku/v17/ipch/AutoPCH/a14c48e42777fdff/SUDOKU.ipch
+/Sudoku/x64/Debug/Sudoku.exe.recipe
+/Sudoku/x64/Debug/Sudoku.log
+/Sudoku/x64/Debug/Sudoku.tlog/CL.command.1.tlog
+/Sudoku/x64/Debug/Sudoku.tlog/CL.read.1.tlog
+/Sudoku/x64/Debug/Sudoku.tlog/CL.write.1.tlog
+/Sudoku/x64/Debug/Sudoku.tlog/Cl.items.tlog
+/Sudoku/x64/Debug/Sudoku.tlog/Sudoku.lastbuildstate
+/Sudoku/x64/Debug/Sudoku.tlog/link.command.1.tlog
+/Sudoku/x64/Debug/Sudoku.tlog/link.read.1.tlog
+/Sudoku/x64/Debug/Sudoku.tlog/link.secondary.1.tlog
+/Sudoku/x64/Debug/Sudoku.tlog/link.write.1.tlog
+/Sudoku/x64/Debug/vc143.idb
