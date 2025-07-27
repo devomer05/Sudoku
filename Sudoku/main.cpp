@@ -1,6 +1,9 @@
 #include <iostream>
+#include "Sudoku.h"
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    Sudoku s;
+    s.init("hardest1.txt");
+	s.print();
 }

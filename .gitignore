@@ -68,3 +68,7 @@
 /Sudoku/x64/Debug/Sudoku.tlog/link.secondary.1.tlog
 /Sudoku/x64/Debug/Sudoku.tlog/link.write.1.tlog
 /Sudoku/x64/Debug/vc143.idb
+/.vs/Sudoku/FileContentIndex/*.vsidx
+/.vs/Sudoku/v17/*.db
+/Sudoku/x64/Debug/*.log
+/Sudoku/x64/Debug/Sudoku.vcxproj.FileListAbsolute.txt
