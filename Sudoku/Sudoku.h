@@ -16,8 +16,6 @@ private:
 	bool usedInRow(uint8_t row, uint8_t val);
 	bool usedInColumn(uint8_t col, uint8_t val);
 	bool usedInBox(uint8_t x, uint8_t y, uint8_t val);
-	int lastX;
-	int lastY;
 public:
 
 	Sudoku()
@@ -29,17 +27,21 @@ public:
 	void set(uint8_t x, uint8_t y, uint8_t val);
 	uint8_t get(uint8_t x, uint8_t y);
 
-	void print();
-
-	bool getFirstUnassignedPos(uint8_t& row, uint8_t& col);
+	bool findUnassigned(uint8_t& row, uint8_t& col);
 	uint8_t GetAssignedCellCount();
-
-	bool init(std::string input);
 
 	bool isSafe(uint8_t x, uint8_t y, uint8_t val)
 	{
 		return !usedInRow(x, val) && !usedInBox(x, y, val) && !usedInColumn(y, val);
 	}
 
+	void print();
+	bool loadFromFile(std::string input);
+	bool validate() const;
+	bool operator==(const Sudoku& other) const;
+	bool isSolved() const;
+	friend std::ostream& operator<<(std::ostream& os, const Sudoku& sudoku);
+	friend std::istream& operator>>(std::istream& is, Sudoku& sudoku);
+	
 };
 
