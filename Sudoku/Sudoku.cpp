@@ -1,8 +1,8 @@
-#include "Sudoku.h"
+﻿#include "Sudoku.h"
 #include <iostream>
 #include <fstream>
 
-bool Sudoku::usedInRow(uint8_t row, uint8_t val)
+bool Sudoku::usedInRow(uint8_t row, uint8_t val) const
 {
 	for (uint8_t col = 0; col < NUMBER_COUNT; col++)
 		if (data[POS(row, col)] == val)
@@ -10,7 +10,7 @@ bool Sudoku::usedInRow(uint8_t row, uint8_t val)
 	return false;
 }
 
-bool Sudoku::usedInColumn(uint8_t col, uint8_t val)
+bool Sudoku::usedInColumn(uint8_t col, uint8_t val) const
 {
 	for (uint8_t row = 0; row < NUMBER_COUNT; row++)
 		if (data[POS(row,col)] == val)
@@ -18,7 +18,7 @@ bool Sudoku::usedInColumn(uint8_t col, uint8_t val)
 	return false;
 }
 
-bool Sudoku::usedInBox(uint8_t x, uint8_t y, uint8_t val)
+bool Sudoku::usedInBox(uint8_t x, uint8_t y, uint8_t val) const
 {
 	uint8_t boxStartRow = x - x % 3;
 	uint8_t boxStartCol = y - y % 3;
@@ -34,7 +34,7 @@ void Sudoku::set(uint8_t x, uint8_t y, uint8_t val)
 	data[POS(x,y)] = val;
 }
 
-uint8_t Sudoku::get(uint8_t x, uint8_t y)
+uint8_t Sudoku::get(uint8_t x, uint8_t y) const
 {
 	return data[POS(x,y)];
 }
@@ -44,13 +44,54 @@ void Sudoku::print()
 	std::cout << *this;
 }
 
-bool Sudoku::findUnassigned(uint8_t& x, uint8_t& y)
+bool Sudoku::findUnassigned(uint8_t& x, uint8_t& y) const
 {
 	for (x = 0; x < NUMBER_COUNT; x++)
 		for (y = 0; y < NUMBER_COUNT; y++)
 			if (data[POS(x,y)] == UNASSIGNED)
 				return true;
 	return false;
+}
+
+bool Sudoku::findCellWithMRV(uint8_t& outRow, uint8_t& outCol) const
+{
+	int bestCount = 10;
+	bool found = false;
+
+	for (uint8_t r = 0; r < NUMBER_COUNT; ++r)
+	{
+		for (uint8_t c = 0; c < NUMBER_COUNT; ++c)
+		{
+			if (get(r, c) != UNASSIGNED)
+				continue;
+
+			int count = 0;
+			for (uint8_t v = 1; v <= NUMBER_COUNT; ++v)
+			{
+				if (isSafe(r, c, v))
+					count++;
+			}
+
+			// Bu dal için çelişki → erken prune
+			if (count == 0)
+				return false;
+
+			if (count < bestCount)
+			{
+				bestCount = count;
+				outRow = r;
+				outCol = c;
+				found = true;
+
+				// Daha iyisi olamaz
+				if (count == 1)
+					return true;
+			}
+		}
+	}
+
+	// found == false → hiç boş hücre yok (tam dolu)
+	return found;
 }
 
 uint8_t Sudoku::GetAssignedCellCount()
@@ -71,7 +112,13 @@ bool Sudoku::loadFromFile(std::string input)
 		std::cout << "Could not open Sudoku Input File: " << input << std::endl;
 		return false;
 	}
-	in >> *this;
+	try {
+		in >> *this;
+	} catch (const std::runtime_error& e) {
+		std::cerr << "Error loading Sudoku from file: " << e.what() << std::endl;
+		in.close();
+		return false;
+	}
 	in.close();
 	return true;
 }
@@ -86,7 +133,7 @@ bool Sudoku::validate() const
 			if (val == UNASSIGNED)
 				continue;
 
-			// --- SATIR KONTROL� ---
+			// --- SATIR KONTROLÜ ---
 			for (int c2 = 0; c2 < 9; ++c2) {
 				if (c2 == c) continue;
 				if (data[POS(r, c2)] == val) {
@@ -95,7 +142,7 @@ bool Sudoku::validate() const
 				}
 			}
 
-			// --- S�TUN KONTROL� ---
+			// --- SÜTUN KONTROLÜ ---
 			for (int r2 = 0; r2 < 9; ++r2) {
 				if (r2 == r) continue;
 				if (data[POS(r2, c)] == val) {
@@ -104,7 +151,7 @@ bool Sudoku::validate() const
 				}
 			}
 
-			// --- 3�3 KUTU KONTROL� ---
+			// --- 3×3 KUTU KONTROLÜ ---
 			int br = (r / 3) * 3;
 			int bc = (c / 3) * 3;
 
@@ -140,6 +187,11 @@ bool Sudoku::operator==(const Sudoku& other) const
 			return false;
 	}
 	return true;
+}
+
+bool Sudoku::operator!=(const Sudoku& other) const
+{
+	return !(*this == other);
 }
 
 bool Sudoku::isSolved() const
@@ -184,9 +236,32 @@ std::istream& operator>>(std::istream& is, Sudoku& sudoku)
 			int val;
 			if (!(is >> val))
 				throw std::runtime_error("Invalid sudoku input.");
-			sudoku.data[POS(i, j)] = (uint16_t)val;
+			if( val < 0 || val > 9)
+				throw std::runtime_error("Sudoku values must be between 0 and 9.");
+			sudoku.data[POS(i, j)] = (uint8_t)val;
 		}
 	}
 	sudoku.validate();
 	return is;
+}
+
+void Sudoku::writeRaw(std::ostream& os) const
+{
+	for (int i = 0; i < NUMBER_COUNT * NUMBER_COUNT; ++i)
+	{
+		os << (int)data[i];
+		if (i + 1 < NUMBER_COUNT * NUMBER_COUNT)
+			os << ' ';
+	}
+	os << '\n';
+}
+
+void Sudoku::readRaw(std::istream& is)
+{
+	for (int i = 0; i < NUMBER_COUNT * NUMBER_COUNT; ++i)
+	{
+		int v;
+		is >> v;
+		data[i] = static_cast<uint8_t>(v);
+	}
 }
