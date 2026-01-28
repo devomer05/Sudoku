@@ -29,6 +29,7 @@ bool Sudoku::usedInBox(uint8_t x, uint8_t y, uint8_t val) const
 	return false;
 }
 
+
 void Sudoku::set(uint8_t x, uint8_t y, uint8_t val)
 {
 	data[POS(x,y)] = val;
@@ -37,6 +38,29 @@ void Sudoku::set(uint8_t x, uint8_t y, uint8_t val)
 uint8_t Sudoku::get(uint8_t x, uint8_t y) const
 {
 	return data[POS(x,y)];
+}
+
+void Sudoku::recomputeCandidates()
+{
+	for(uint8_t x = 0; x < NUMBER_COUNT; x++)
+	{
+		for(uint8_t y = 0; y < NUMBER_COUNT; y++)
+		{
+			if (get(x, y) != UNASSIGNED)
+			{
+				candidates[POS(x, y)] = 0;
+				continue;
+			}
+			candidates[POS(x, y)] = FULL_MASK;
+			for (uint8_t v = 1; v <= NUMBER_COUNT; v++)
+			{
+				if (!isSafe(x, y, v))
+				{
+					removeCandidate(x, y, v);
+				}
+			}
+		}
+	}
 }
 
 void Sudoku::print()
@@ -96,7 +120,7 @@ bool Sudoku::findCellWithMRV(uint8_t& outRow, uint8_t& outCol) const
 
 uint8_t Sudoku::GetAssignedCellCount()
 {
-	int counter = 0;
+	uint8_t counter = 0;
 	for (uint8_t x = 0; x < NUMBER_COUNT; x++)
 		for (uint8_t y = 0; y < NUMBER_COUNT; y++)
 			if (data[POS(x,y)] != UNASSIGNED)
@@ -241,7 +265,10 @@ std::istream& operator>>(std::istream& is, Sudoku& sudoku)
 			sudoku.data[POS(i, j)] = (uint8_t)val;
 		}
 	}
-	sudoku.validate();
+	if(!sudoku.validate())
+	{ 
+		throw std::runtime_error("The provided Sudoku puzzle is invalid.");
+	}
 	return is;
 }
 

@@ -5,9 +5,9 @@ class Sudoku;
 
 enum class SolveResult
 {
-    Solved,      // Tam çözüldü
+    SolvedByBacktracking,      // Tam çözüldü - backtracking
+	SolvedByLogical,    // Tam çözüldü - mantýksal yöntemler
     Unsolvable,  // Çözüm yok
-    Partial      // Kýsmen ilerledi (logical solver için)
 };
 
 class ISudokuSolver

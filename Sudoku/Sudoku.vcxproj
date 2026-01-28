@@ -128,6 +128,7 @@
     <ClCompile Include="BacktrackingSolver.cpp" />
     <ClCompile Include="BacktrackingSolverMRV.cpp" />
     <ClCompile Include="DatasetLoader.cpp" />
+    <ClCompile Include="LogicalSolver.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Sudoku.cpp" />
   </ItemGroup>
@@ -136,6 +137,7 @@
     <ClInclude Include="BacktrackingSolverMRV.h" />
     <ClInclude Include="DatasetLoader.h" />
     <ClInclude Include="ISudokuSolver.h" />
+    <ClInclude Include="LogicalSolver.h" />
     <ClInclude Include="Sudoku.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

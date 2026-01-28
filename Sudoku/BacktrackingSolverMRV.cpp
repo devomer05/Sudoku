@@ -4,10 +4,10 @@ SolveResult BacktrackingSolverMRV::solve(Sudoku& sudoku)
 {
     // Entry-point davranýþý BacktrackingSolver ile AYNI
     if (sudoku.isSolved())
-        return SolveResult::Solved;
+        return SolveResult::SolvedByBacktracking;
 
     bool ok = solveRecursive(sudoku);
-    return ok ? SolveResult::Solved : SolveResult::Unsolvable;
+    return ok ? SolveResult::SolvedByBacktracking : SolveResult::Unsolvable;
 }
 
 bool BacktrackingSolverMRV::solveRecursive(Sudoku& sudoku)
