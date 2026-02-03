@@ -9,275 +9,235 @@
 
 using Clock = std::chrono::high_resolution_clock;
 
+static void printStats(
+    const char* title,
+    const SolveStats& stats,
+    long long totalMs)
+{
+    size_t total = stats.total();
+
+    std::cout << "[" << title << "] Total time: "
+        << totalMs << " ms\n";
+    std::cout << "[" << title << " Stats]\n";
+
+    if (stats.alreadySolved > 0)
+        std::cout << "Already Solved         : "
+        << stats.alreadySolved
+        << " (" << 100.0 * stats.alreadySolved / total << "%)\n";
+
+    if (stats.logical > 0)
+        std::cout << "Solved by Logical      : "
+        << stats.logical
+        << " (" << 100.0 * stats.logical / total << "%)\n";
+
+    if (stats.backtracking > 0)
+        std::cout << "Solved by Backtracking : "
+        << stats.backtracking
+        << " (" << 100.0 * stats.backtracking / total << "%)\n";
+
+    if (stats.unsolvable > 0)
+        std::cout << "Unsolvable             : "
+        << stats.unsolvable << "\n";
+}
+
 int main()
 {
     /*
-    // Single Sudoku sanity test (manual debugging)
-
+    // Single Sudoku sanity test
     Sudoku s;
     s.loadFromFile("hardest1.txt");
-
-    ISudokuSolver* solver = new BacktrackingSolver();
-    SolveResult res = solver->solve(s);
-    if (res == SolveResult::SolvedByBacktracking)
-    {
-        std::cout << "Solved by BacktrackingSolver:\n";
-        std::cout << s << std::endl;
-    }
-    delete solver;
-
-    solver = new BacktrackingSolverMRV();
-    res = solver->solve(s);
-    if (res == SolveResult::SolvedByBacktracking)
-    {
-        std::cout << "Solved by BacktrackingSolverMRV:\n";
-        std::cout << s << std::endl;
-    }
-    delete solver;
-
-    solver = new LogicalSolver();
-    res = solver->solve(s);
-    if (res == SolveResult::SolvedByLogical)
-    {
-        std::cout << "Solved by LogicalSolver:\n";
-        std::cout << s << std::endl;
-    }
-    delete solver;
-
+    LogicalSolver solver;
+    solver.solve(s);
+    std::cout << s << std::endl;
     return 0;
     */
 
     /* ============================================================
-       LOAD DATASETS (ONCE)
+       LOAD DATASETS ONCE
        ============================================================ */
     std::vector<std::vector<Sudoku>> baseDatasets =
         DatasetLoader::loadAllDatasets("Dataset");
 
     /* ============================================================
+       PREPARE ALL DATASETS (FULL COPIES)
+       ============================================================ */
+    std::vector<std::vector<Sudoku>> mrvSeq = baseDatasets;
+    std::vector<std::vector<Sudoku>> mrvPar = baseDatasets;
+    std::vector<std::vector<Sudoku>> logicalSeq = baseDatasets;
+    std::vector<std::vector<Sudoku>> logicalPar = baseDatasets;
+
+    /* ============================================================
        SOLVERS
        ============================================================ */
-    BacktrackingSolverMRV solverMRV;
-    LogicalSolver solverLogical;
-
-    ISudokuSolver* solvers[2];
-    solvers[0] = &solverMRV;
-    solvers[1] = &solverLogical;
+    BacktrackingSolverMRV mrvSolver;
+    LogicalSolver logicalSolver;
 
     /* ============================================================
-       DATASET COPIES (ISOLATED PER SOLVER / MODE)
+       BACKTRACKING MRV - SEQUENTIAL
        ============================================================ */
-    std::vector<std::vector<Sudoku>> sequentialDatasets[2];
-    std::vector<std::vector<Sudoku>> parallelDatasets[2];
-
-    sequentialDatasets[0] = baseDatasets;
-    sequentialDatasets[1] = baseDatasets;
-
-    parallelDatasets[0] = baseDatasets;
-    parallelDatasets[1] = baseDatasets;
-
-    /* ============================================================
-       BENCHMARK
-       ============================================================ */
-    for (int solverIndex = 0; solverIndex < 2; ++solverIndex)
     {
-        ISudokuSolver* solver = solvers[solverIndex];
-
-        /* ----------------------------
-           SEQUENTIAL RUN
-           ---------------------------- */
-        std::cout << "\n=== " << solver->getName()
+        std::cout << "\n=== " << mrvSolver.getName()
             << " (Sequential) ===\n";
 
-        SolveStats sequentialStats;
-        Clock::time_point sequentialStart = Clock::now();
+        SolveStats stats;
+        Clock::time_point t0 = Clock::now();
 
-        for (size_t datasetIndex = 0;
-            datasetIndex < sequentialDatasets[solverIndex].size();
-            ++datasetIndex)
+        for (size_t d = 0; d < mrvSeq.size(); ++d)
         {
-            std::vector<Sudoku>& dataset =
-                sequentialDatasets[solverIndex][datasetIndex];
+            Clock::time_point s = Clock::now();
+            SolveStats ds = mrvSolver.solveAll(mrvSeq[d]);
+            Clock::time_point e = Clock::now();
 
-            uint8_t initialClues =
-                dataset[0].GetAssignedCellCount();
+            stats.alreadySolved += ds.alreadySolved;
+            stats.logical += ds.logical;
+            stats.backtracking += ds.backtracking;
+            stats.unsolvable += ds.unsolvable;
 
-            std::cout << "[Dataset" << datasetIndex << "] "
-                << "count = " << dataset.size()
-                << " | initial clues = "
-                << (int)initialClues << "/81"
-                << " ... solving...\n";
-
-            Clock::time_point start = Clock::now();
-            SolveStats stats = solver->solveAll(dataset);
-            Clock::time_point end = Clock::now();
-
-            sequentialStats.logical += stats.logical;
-            sequentialStats.backtracking += stats.backtracking;
-            sequentialStats.unsolvable += stats.unsolvable;
-
-            long long elapsedMs =
-                std::chrono::duration_cast<std::chrono::milliseconds>(
-                    end - start).count();
-
-            std::cout << "[Dataset" << datasetIndex
-                << "] finished in "
-                << elapsedMs << " ms\n";
+            std::cout << "[Dataset" << d << "] finished in "
+                << std::chrono::duration_cast<
+                std::chrono::milliseconds>(e - s).count()
+                << " ms\n";
         }
 
-        Clock::time_point sequentialEnd = Clock::now();
-        long long sequentialTotalMs =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                sequentialEnd - sequentialStart).count();
+        Clock::time_point t1 = Clock::now();
+        printStats(
+            "BacktrackingMRV Sequential",
+            stats,
+            std::chrono::duration_cast<
+            std::chrono::milliseconds>(t1 - t0).count());
+    }
 
-        std::cout << "[" << solver->getName()
-            << " Sequential] Total time: "
-            << sequentialTotalMs << " ms\n";
-        size_t sequentialTotal =
-            sequentialStats.logical +
-            sequentialStats.backtracking +
-            sequentialStats.unsolvable;
-
-        std::cout << "\n[" << solver->getName()
-            << " Sequential Stats]\n";
-
-        if (sequentialStats.logical > 0)
-        {
-            std::cout << "Solved by Logical      : "
-                << sequentialStats.logical
-                << " ("
-                << (100.0 * sequentialStats.logical / sequentialTotal)
-                << "%)\n";
-        }
-
-        if (sequentialStats.backtracking > 0)
-        {
-            std::cout << "Solved by Backtracking : "
-                << sequentialStats.backtracking
-                << " ("
-                << (100.0 * sequentialStats.backtracking / sequentialTotal)
-                << "%)\n";
-        }
-
-        if (sequentialStats.unsolvable > 0)
-        {
-            std::cout << "Unsolvable             : "
-                << sequentialStats.unsolvable << "\n";
-        }
-        /* ----------------------------
-           PARALLEL RUN
-           ---------------------------- */
-        std::cout << "\n=== " << solver->getName()
+    /* ============================================================
+       BACKTRACKING MRV - PARALLEL
+       ============================================================ */
+    {
+        std::cout << "\n=== " << mrvSolver.getName()
             << " (Parallel) ===\n";
 
-        SolveStats parallelStats;
-        Clock::time_point parallelStart = Clock::now();
+        SolveStats stats;
+        Clock::time_point t0 = Clock::now();
 
-        for (size_t datasetIndex = 0;
-            datasetIndex < parallelDatasets[solverIndex].size();
-            ++datasetIndex)
+        for (size_t d = 0; d < mrvPar.size(); ++d)
         {
-            std::vector<Sudoku>& dataset =
-                parallelDatasets[solverIndex][datasetIndex];
+            Clock::time_point s = Clock::now();
+            SolveStats ds =
+                ParallelSolver::solveAll(mrvSolver, mrvPar[d], 10);
+            Clock::time_point e = Clock::now();
 
-            Clock::time_point start = Clock::now();
-            SolveStats stats =
-                ParallelSolver::solveAll(*solver, dataset);
-            Clock::time_point end = Clock::now();
+            stats.alreadySolved += ds.alreadySolved;
+            stats.logical += ds.logical;
+            stats.backtracking += ds.backtracking;
+            stats.unsolvable += ds.unsolvable;
 
-            parallelStats.logical += stats.logical;
-            parallelStats.backtracking += stats.backtracking;
-            parallelStats.unsolvable += stats.unsolvable;
-
-            long long elapsedMs =
-                std::chrono::duration_cast<std::chrono::milliseconds>(
-                    end - start).count();
-
-            std::cout << "[Dataset" << datasetIndex
-                << "] finished in "
-                << elapsedMs << " ms\n";
+            std::cout << "[Dataset" << d << "] finished in "
+                << std::chrono::duration_cast<
+                std::chrono::milliseconds>(e - s).count()
+                << " ms\n";
         }
 
-        Clock::time_point parallelEnd = Clock::now();
-        long long parallelTotalMs =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                parallelEnd - parallelStart).count();
+        Clock::time_point t1 = Clock::now();
+        printStats(
+            "BacktrackingMRV Parallel",
+            stats,
+            std::chrono::duration_cast<
+            std::chrono::milliseconds>(t1 - t0).count());
+    }
 
-        std::cout << "[" << solver->getName()
-            << " Parallel] Total time: "
-            << parallelTotalMs << " ms\n";
+    /* ============================================================
+       LOGICAL SOLVER - SEQUENTIAL
+       ============================================================ */
+    {
+        std::cout << "\n=== " << logicalSolver.getName()
+            << " (Sequential) ===\n";
 
-        /* ----------------------------
-           PARALLEL STATS REPORT
-           ---------------------------- */
-        size_t totalSolved =
-            parallelStats.logical +
-            parallelStats.backtracking +
-            parallelStats.unsolvable;
+        SolveStats stats;
+        Clock::time_point t0 = Clock::now();
 
-        std::cout << "\n[" << solver->getName()
-            << " Parallel Stats]\n";
-
-        if (parallelStats.logical > 0)
+        for (size_t d = 0; d < logicalSeq.size(); ++d)
         {
-            std::cout << "Solved by Logical      : "
-                << parallelStats.logical
-                << " ("
-                << (100.0 * parallelStats.logical / totalSolved)
-                << "%)\n";
+            Clock::time_point s = Clock::now();
+            SolveStats ds = logicalSolver.solveAll(logicalSeq[d]);
+            Clock::time_point e = Clock::now();
+
+            stats.alreadySolved += ds.alreadySolved;
+            stats.logical += ds.logical;
+            stats.backtracking += ds.backtracking;
+            stats.unsolvable += ds.unsolvable;
+
+            std::cout << "[Dataset" << d << "] finished in "
+                << std::chrono::duration_cast<
+                std::chrono::milliseconds>(e - s).count()
+                << " ms\n";
         }
 
-        if (parallelStats.backtracking > 0)
+        Clock::time_point t1 = Clock::now();
+        printStats(
+            "LogicalSolver Sequential",
+            stats,
+            std::chrono::duration_cast<
+            std::chrono::milliseconds>(t1 - t0).count());
+    }
+
+    /* ============================================================
+       LOGICAL SOLVER - PARALLEL
+       ============================================================ */
+    {
+        std::cout << "\n=== " << logicalSolver.getName()
+            << " (Parallel) ===\n";
+
+        SolveStats stats;
+        Clock::time_point t0 = Clock::now();
+
+        for (size_t d = 0; d < logicalPar.size(); ++d)
         {
-            std::cout << "Solved by Backtracking : "
-                << parallelStats.backtracking
-                << " ("
-                << (100.0 * parallelStats.backtracking / totalSolved)
-                << "%)\n";
+            Clock::time_point s = Clock::now();
+            SolveStats ds =
+                ParallelSolver::solveAll(logicalSolver, logicalPar[d], 10);
+            Clock::time_point e = Clock::now();
+
+            stats.alreadySolved += ds.alreadySolved;
+            stats.logical += ds.logical;
+            stats.backtracking += ds.backtracking;
+            stats.unsolvable += ds.unsolvable;
+
+            std::cout << "[Dataset" << d << "] finished in "
+                << std::chrono::duration_cast<
+                std::chrono::milliseconds>(e - s).count()
+                << " ms\n";
         }
 
-        if (parallelStats.unsolvable > 0)
-        {
-            std::cout << "Unsolvable             : "
-                << parallelStats.unsolvable << "\n";
-        }
+        Clock::time_point t1 = Clock::now();
+        printStats(
+            "LogicalSolver Parallel",
+            stats,
+            std::chrono::duration_cast<
+            std::chrono::milliseconds>(t1 - t0).count());
     }
 
     /* ============================================================
        RESULT COMPARISON (SEQUENTIAL ONLY)
        ============================================================ */
     {
-        bool allResultsMatch = true;
+        bool allSame = true;
 
-        std::vector<std::vector<Sudoku>>& mrvResults =
-            sequentialDatasets[0];
-        std::vector<std::vector<Sudoku>>& logicalResults =
-            sequentialDatasets[1];
-
-        for (size_t d = 0; d < mrvResults.size(); ++d)
+        for (size_t d = 0; d < mrvSeq.size(); ++d)
         {
-            for (size_t i = 0; i < mrvResults[d].size(); ++i)
+            for (size_t i = 0; i < mrvSeq[d].size(); ++i)
             {
-                if (!(mrvResults[d][i] == logicalResults[d][i]))
+                if (!(mrvSeq[d][i] == logicalSeq[d][i]))
                 {
-                    allResultsMatch = false;
-
                     std::cout << "\n[DIFF] Dataset "
                         << d << ", Index " << i << "\n";
-
-                    std::cout << "BacktrackingMRV:\n"
-                        << mrvResults[d][i] << "\n";
-
-                    std::cout << "LogicalSolver:\n"
-                        << logicalResults[d][i] << "\n";
+                    allSame = false;
+                    break;
                 }
             }
+            if (!allSame)
+                break;
         }
 
-        if (allResultsMatch)
-        {
-            std::cout
-                << "\n[COMPARE] All sequential solvers produced identical results.\n";
-        }
+        if (allSame)
+            std::cout << "\n[COMPARE] All sequential solvers produced identical results.\n";
     }
 
     return 0;

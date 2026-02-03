@@ -4,7 +4,7 @@ SolveResult BacktrackingSolver::solve(Sudoku& sudoku)
 {
     // Eðer zaten çözüldüyse
     if (sudoku.isSolved())
-        return SolveResult::SolvedByBacktracking;
+        return SolveResult::AlreadySolved;
 
     bool ok = solveRecursive(sudoku);
     return ok ? SolveResult::SolvedByBacktracking : SolveResult::Unsolvable;

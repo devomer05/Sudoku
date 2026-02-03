@@ -11,6 +11,7 @@ SolveStats ParallelSolver::solveAll(
         std::max(1u, std::min(threadCount, hw ? hw : 1u));
     std::cout << "[INFO] Parallel threads count = " << threads << "\n";
     std::atomic<size_t> index{ 0 };
+    std::atomic<size_t> alreadySolved{ 0 };
     std::atomic<size_t> logical{ 0 };
     std::atomic<size_t> backtracking{ 0 };
     std::atomic<size_t> unsolvable{ 0 };
@@ -29,8 +30,9 @@ SolveStats ParallelSolver::solveAll(
                         break;
 
                     SolveResult r = solver.solve(sudokus[i]);
-
-                    if (r == SolveResult::SolvedByLogical)
+                    if (r == SolveResult::AlreadySolved)
+						++alreadySolved;
+                    else if (r == SolveResult::SolvedByLogical)
                         ++logical;
                     else if (r == SolveResult::SolvedByBacktracking)
                         ++backtracking;
@@ -44,6 +46,7 @@ SolveStats ParallelSolver::solveAll(
         th.join();
 
     SolveStats stats;
+	stats.alreadySolved = alreadySolved.load();
     stats.logical = logical.load();
     stats.backtracking = backtracking.load();
     stats.unsolvable = unsolvable.load();

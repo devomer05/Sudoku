@@ -3,6 +3,9 @@
 
 SolveResult LogicalSolver::solve(Sudoku& sudoku)
 {
+    if (sudoku.isSolved())
+		return SolveResult::AlreadySolved;
+
 	sudoku.recomputeCandidates();
 
 	while (!sudoku.isSolved() && applyLogicalStep(sudoku));
