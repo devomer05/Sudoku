@@ -10,6 +10,12 @@ enum class SolveResult
     Unsolvable,  // Çözüm yok
 };
 
+struct SolveStats {
+    size_t logical = 0;
+    size_t backtracking = 0;
+    size_t unsolvable = 0;
+};
+
 class ISudokuSolver
 {
 public:
@@ -19,12 +25,19 @@ public:
     virtual SolveResult solve(Sudoku& sudoku) = 0;
 
     // Çoklu Sudoku çözümü (batch / CUDA / MT yolu)
-    virtual void solveAll(std::vector<Sudoku>& sudokus)
+    virtual SolveStats solveAll(std::vector<Sudoku>& sudokus)
     {
+        SolveStats stats;
         for (auto& s : sudokus)
-            solve(s);
+        {
+            SolveResult r = solve(s);
+            if (r == SolveResult::SolvedByLogical) ++stats.logical;
+            else if (r == SolveResult::SolvedByBacktracking) ++stats.backtracking;
+            else ++stats.unsolvable;
+        }
+        return stats;
     }
-
+    virtual const char* getName() const = 0;
 protected:
     ISudokuSolver() = default;
 };

@@ -73,3 +73,5 @@
 /Sudoku/x64/Debug/*.log
 /Sudoku/x64/Debug/Sudoku.vcxproj.FileListAbsolute.txt
 /Sudoku/Dataset
+/Sudoku/x64/Release/Sudoku.tlog/*.tlog
+*.ipch

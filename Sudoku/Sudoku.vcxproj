@@ -130,6 +130,7 @@
     <ClCompile Include="DatasetLoader.cpp" />
     <ClCompile Include="LogicalSolver.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ParallelSolver.cpp" />
     <ClCompile Include="Sudoku.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -138,6 +139,7 @@
     <ClInclude Include="DatasetLoader.h" />
     <ClInclude Include="ISudokuSolver.h" />
     <ClInclude Include="LogicalSolver.h" />
+    <ClInclude Include="ParallelSolver.h" />
     <ClInclude Include="Sudoku.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
