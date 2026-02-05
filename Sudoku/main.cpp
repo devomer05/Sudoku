@@ -5,6 +5,7 @@
 #include "DatasetLoader.h"
 #include "BacktrackingSolverMRV.h"
 #include "LogicalSolver.h"
+#include "LogicalSolverSIMD.h"
 #include "ParallelSolver.h"
 
 using Clock = std::chrono::high_resolution_clock;
@@ -68,26 +69,32 @@ int main()
     std::vector<std::vector<Sudoku>> mrvParDatasets = baseDatasets;
     std::vector<std::vector<Sudoku>> logicalSeqDatasets = baseDatasets;
     std::vector<std::vector<Sudoku>> logicalParDatasets = baseDatasets;
+    std::vector<std::vector<Sudoku>> simdSeqDatasets = baseDatasets;
+    std::vector<std::vector<Sudoku>> simdParDatasets = baseDatasets;
 
     /* ============================================================
        SOLVERS
        ============================================================ */
     BacktrackingSolverMRV mrvSolver;
     LogicalSolver logicalSolver;
+    LogicalSolverSIMD simdLogicalSolver;
 
-    ISudokuSolver* solvers[2] = {
+    ISudokuSolver* solvers[3] = {
         &mrvSolver,
-        &logicalSolver
+        &logicalSolver,
+        &simdLogicalSolver
     };
 
-    std::vector<std::vector<Sudoku>>* seqDatasets[2] = {
+    std::vector<std::vector<Sudoku>>* seqDatasets[3] = {
         &mrvSeqDatasets,
-        &logicalSeqDatasets
+        &logicalSeqDatasets,
+        &simdSeqDatasets
     };
 
-    std::vector<std::vector<Sudoku>>* parDatasets[2] = {
+    std::vector<std::vector<Sudoku>>* parDatasets[3] = {
         &mrvParDatasets,
-        &logicalParDatasets
+        &logicalParDatasets,
+        &simdParDatasets
     };
 
     const int threadCount = 10;
@@ -95,7 +102,7 @@ int main()
     /* ============================================================
        BENCHMARK (SINGLE SOLVER LOOP)
        ============================================================ */
-    for (int i = 0; i < 2; ++i)
+    for (int i = 0; i < 3; ++i)
     {
         ISudokuSolver& solver = *solvers[i];
 
@@ -112,8 +119,7 @@ int main()
             for (size_t d = 0; d < seqDatasets[i]->size(); ++d)
             {
                 auto& dataset = (*seqDatasets[i])[d];
-
-                size_t clues =  dataset.front().GetAssignedCellCount();
+                size_t clues = dataset.front().GetAssignedCellCount();
 
                 Clock::time_point s = Clock::now();
                 SolveStats ds = solver.solveAll(dataset);
@@ -140,6 +146,25 @@ int main()
                 std::chrono::milliseconds>(t1 - t0).count());
         }
 
+        if (auto* ls = dynamic_cast<LogicalSolver*>(&solver))
+        {
+            const LogicalStats& st = ls->getLogicalStats();
+
+            std::cout << "\n[Logical Details]\n";
+            std::cout << "NakedSingle        : hit=" << st.data[0][0]
+                << " effect=" << st.data[0][1] << "\n";
+            std::cout << "HiddenSingle       : hit=" << st.data[1][0]
+                << " effect=" << st.data[1][1] << "\n";
+            std::cout << "LockedPointing     : hit=" << st.data[2][0]
+                << " effect=" << st.data[2][1] << "\n";
+            std::cout << "LockedClaiming     : hit=" << st.data[3][0]
+                << " effect=" << st.data[3][1] << "\n";
+            std::cout << "NakedPair          : hit=" << st.data[4][0]
+                << " effect=" << st.data[4][1] << "\n";
+            std::cout << "HiddenPair         : hit=" << st.data[5][0]
+                << " effect=" << st.data[5][1] << "\n";
+        }
+        
         /* ----------------------------
            PARALLEL
            ---------------------------- */
@@ -159,7 +184,7 @@ int main()
                 SolveStats ds =
                     ParallelSolver::solveAll(
                         solver,
-                        (*parDatasets[i])[d],
+                        dataset,
                         threadCount);
                 Clock::time_point e = Clock::now();
 
@@ -195,7 +220,10 @@ int main()
         {
             for (size_t i = 0; i < mrvSeqDatasets[d].size(); ++i)
             {
-                if (!(mrvSeqDatasets[d][i] == logicalSeqDatasets[d][i]))
+                const Sudoku& ref = mrvSeqDatasets[d][i];
+
+                if (!(ref == logicalSeqDatasets[d][i]) ||
+                    !(ref == simdSeqDatasets[d][i]))
                 {
                     std::cout << "\n[DIFF] Dataset "
                         << d << ", Index " << i << "\n";

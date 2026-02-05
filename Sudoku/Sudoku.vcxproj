@@ -118,10 +118,15 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <OmitFramePointers>true</OmitFramePointers>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -129,6 +134,7 @@
     <ClCompile Include="BacktrackingSolverMRV.cpp" />
     <ClCompile Include="DatasetLoader.cpp" />
     <ClCompile Include="LogicalSolver.cpp" />
+    <ClCompile Include="LogicalSolverSIMD.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ParallelSolver.cpp" />
     <ClCompile Include="Sudoku.cpp" />
@@ -139,7 +145,9 @@
     <ClInclude Include="DatasetLoader.h" />
     <ClInclude Include="ISudokuSolver.h" />
     <ClInclude Include="LogicalSolver.h" />
+    <ClInclude Include="LogicalSolverSIMD.h" />
     <ClInclude Include="ParallelSolver.h" />
+    <ClInclude Include="simd_utils.h" />
     <ClInclude Include="Sudoku.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

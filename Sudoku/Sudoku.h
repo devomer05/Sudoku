@@ -22,6 +22,11 @@ static inline bool singleMask(uint16_t m)
 	return m && ((m & (m - 1)) == 0);
 }
 
+static inline uint8_t extractSingleValue(uint16_t m)
+{
+	return static_cast<uint8_t>(std::countr_zero(m) + 1);
+}
+
 class Sudoku
 {
 
@@ -40,6 +45,8 @@ public:
 		std::memset(candidates, 0, sizeof(candidates));
 	}
 	~Sudoku(){}
+
+	const uint16_t* candidatesData() const { return candidates; }
 
 	void set(uint8_t x, uint8_t y, uint8_t val);
 	uint8_t get(uint8_t x, uint8_t y) const;
@@ -61,7 +68,12 @@ public:
 
 	void addCandidate(uint8_t x, uint8_t y, uint8_t v) { candidates[POS(x, y)] |= bit(v); }
 
-	void removeCandidate(uint8_t x, uint8_t y, uint8_t v) { candidates[POS(x, y)] &= ~bit(v); }
+	inline bool removeCandidate(uint8_t x, uint8_t y, uint8_t v)
+	{
+		uint16_t before = candidates[POS(x, y)];
+		candidates[POS(x, y)] &= ~bit(v);
+		return before != candidates[POS(x, y)];
+	}
 
 	bool isCandidateEmpty(uint8_t x, uint8_t y) const { return candidates[POS(x, y)] == 0; }
 
@@ -69,8 +81,9 @@ public:
 
 	uint8_t getSingleCandidate(uint8_t x, uint8_t y) const {
 		uint16_t m = candidates[POS(x, y)];
-		for (uint8_t v = 1; v <= 9; ++v) if (m & bit(v)) return v;
-		return 0;
+		if (!singleMask(m))
+			return 0;
+		return extractSingleValue(m);
 	}
 
 	// remove-only candidate propagation after set(x,y,val)
