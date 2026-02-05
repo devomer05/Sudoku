@@ -7,6 +7,8 @@
 
 namespace fs = std::filesystem;
 
+#define MAX_SUDOKU_COUNT 1000
+
 static std::string mergedPath(const std::string& folder)
 {
     return folder + "/merged.txt";
@@ -17,7 +19,7 @@ DatasetLoader::loadAllDatasets(const std::string& rootFolder)
 {
     std::vector<std::vector<Sudoku>> all;
 
-    for (int d = 0; d <= 4; ++d)
+    for (int d = 0; d <= 5; ++d)
     {
         std::string folder =
             rootFolder + "/dataset" + std::to_string(d);
@@ -49,7 +51,7 @@ DatasetLoader::loadSingleDataset(const std::string& datasetFolder)
 
         sudokus.reserve(count);
 
-        for (size_t i = 0; i < count; ++i)
+        for (size_t i = 0; i < count && i < MAX_SUDOKU_COUNT; ++i)
         {
             try {
                 Sudoku s;

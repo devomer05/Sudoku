@@ -111,8 +111,12 @@ int main()
 
             for (size_t d = 0; d < seqDatasets[i]->size(); ++d)
             {
+                auto& dataset = (*seqDatasets[i])[d];
+
+                size_t clues =  dataset.front().GetAssignedCellCount();
+
                 Clock::time_point s = Clock::now();
-                SolveStats ds = solver.solveAll((*seqDatasets[i])[d]);
+                SolveStats ds = solver.solveAll(dataset);
                 Clock::time_point e = Clock::now();
 
                 stats.alreadySolved += ds.alreadySolved;
@@ -120,7 +124,9 @@ int main()
                 stats.backtracking += ds.backtracking;
                 stats.unsolvable += ds.unsolvable;
 
-                std::cout << "[Dataset" << d << "] finished in "
+                std::cout
+                    << "[Dataset" << d << " ("
+                    << clues << "/81 initial clues)] finished in "
                     << std::chrono::duration_cast<
                     std::chrono::milliseconds>(e - s).count()
                     << " ms\n";
@@ -146,6 +152,9 @@ int main()
 
             for (size_t d = 0; d < parDatasets[i]->size(); ++d)
             {
+                auto& dataset = (*parDatasets[i])[d];
+                size_t clues = dataset.front().GetAssignedCellCount();
+
                 Clock::time_point s = Clock::now();
                 SolveStats ds =
                     ParallelSolver::solveAll(
@@ -159,7 +168,9 @@ int main()
                 stats.backtracking += ds.backtracking;
                 stats.unsolvable += ds.unsolvable;
 
-                std::cout << "[Dataset" << d << "] finished in "
+                std::cout
+                    << "[Dataset" << d << " ("
+                    << clues << "/81 initial clues)] finished in "
                     << std::chrono::duration_cast<
                     std::chrono::milliseconds>(e - s).count()
                     << " ms\n";

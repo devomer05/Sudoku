@@ -29,7 +29,6 @@ bool Sudoku::usedInBox(uint8_t x, uint8_t y, uint8_t val) const
 	return false;
 }
 
-
 void Sudoku::set(uint8_t x, uint8_t y, uint8_t val)
 {
 	data[POS(x,y)] = val;
