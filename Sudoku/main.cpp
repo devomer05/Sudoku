@@ -97,7 +97,7 @@ int main()
         &simdParDatasets
     };
 
-    const int threadCount = 10;
+    const int threadCount = 20;
 
     /* ============================================================
        BENCHMARK (SINGLE SOLVER LOOP)
