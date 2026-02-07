@@ -7,7 +7,7 @@
 
 namespace fs = std::filesystem;
 
-#define MAX_SUDOKU_COUNT 2500
+#define MAX_SUDOKU_COUNT 250
 
 static std::string mergedPath(const std::string& folder)
 {
