@@ -5,7 +5,7 @@
 struct LogicalStats {
 	// [technique][metric]
 	// metric: 0 = hit, 1 = effect
-	uint32_t data[6][2] = {};
+	uint32_t data[8][2] = {};
 };
 
 enum {
@@ -14,22 +14,25 @@ enum {
 	LS_LOCKED_POINTING,
 	LS_LOCKED_CLAIMING,
 	LS_NAKED_PAIR,
-	LS_HIDDEN_PAIR
+	LS_HIDDEN_PAIR,
+	LS_NAKED_TRIPLE,
+	LS_HIDDEN_TRIPLE,
 };
 
 
 class LogicalSolver : public ISudokuSolver
 {
-private:
 	
+protected:
+	virtual bool applyNakedSingle(Sudoku& s);
 	bool applyHiddenSingle(Sudoku& s);
 	bool applyLockedCandidatesPointing(Sudoku& sudoku);
 	bool applyLockedCandidatesClaiming(Sudoku& sudoku);
 	bool applyNakedPair(Sudoku& s);
 	bool applyHiddenPair(Sudoku& s);
 	bool applyLogicalStep(Sudoku& s);
-protected:
-	virtual bool applyNakedSingle(Sudoku& s);
+	bool applyNakedTriple(Sudoku& s);
+	bool applyHiddenTriple(Sudoku& s);
 	LogicalStats logicalStats;
 public:
 	const LogicalStats& getLogicalStats() const { return logicalStats; }

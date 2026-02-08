@@ -1,4 +1,4 @@
-#include "LogicalSolver.h"
+﻿#include "LogicalSolver.h"
 #include "BacktrackingSolverMRV.h"
 
 SolveResult LogicalSolver::solve(Sudoku& sudoku)
@@ -24,6 +24,8 @@ bool LogicalSolver::applyLogicalStep(Sudoku& s)
     if (applyLockedCandidatesClaiming(s))  return true;
     if (applyNakedPair(s))                 return true;
     if (applyHiddenPair(s))                return true;
+	if (applyNakedTriple(s))               return true;
+	if (applyHiddenTriple(s))              return true;
 
     return false;
 }
@@ -311,5 +313,158 @@ bool LogicalSolver::applyHiddenPair(Sudoku& s)
         logicalStats.data[LS_HIDDEN_PAIR][0]++;
         logicalStats.data[LS_HIDDEN_PAIR][1] += localRemove;
     }
+    return changed;
+}
+
+bool LogicalSolver::applyNakedTriple(Sudoku& s)
+{
+    bool changed = false;
+    uint32_t localRemove = 0;
+
+    auto handleUnit = [&](const int idx[9]) {
+        for (int a = 0; a < 7; ++a)
+            for (int b = a + 1; b < 8; ++b)
+                for (int c = b + 1; c < 9; ++c)
+                {
+                    int i1 = idx[a], i2 = idx[b], i3 = idx[c];
+
+                    if (s.get(i1 / 9, i1 % 9) != UNASSIGNED) continue;
+                    if (s.get(i2 / 9, i2 % 9) != UNASSIGNED) continue;
+                    if (s.get(i3 / 9, i3 % 9) != UNASSIGNED) continue;
+
+                    uint16_t m1 = s.getCandidates(i1 / 9, i1 % 9);
+                    uint16_t m2 = s.getCandidates(i2 / 9, i2 % 9);
+                    uint16_t m3 = s.getCandidates(i3 / 9, i3 % 9);
+
+                    uint16_t uni = m1 | m2 | m3;
+                    if (std::popcount(uni) != 3) continue;
+
+                    for (int k = 0; k < 9; ++k)
+                    {
+                        if (k == a || k == b || k == c) continue;
+                        int i = idx[k];
+                        if (s.get(i / 9, i % 9) != UNASSIGNED) continue;
+
+                        if (s.removeCandidatesMask(i / 9, i % 9, uni))
+                        {
+                            changed = true;
+                            ++localRemove;
+                        }
+                    }
+                }
+        };
+
+    // rows
+    for (int r = 0; r < 9; ++r) {
+        int idx[9];
+        for (int c = 0; c < 9; ++c) idx[c] = r * 9 + c;
+        handleUnit(idx);
+    }
+
+    // columns
+    for (int c = 0; c < 9; ++c) {
+        int idx[9];
+        for (int r = 0; r < 9; ++r) idx[r] = r * 9 + c;
+        handleUnit(idx);
+    }
+
+    // boxes
+    for (int br = 0; br < 9; br += 3)
+        for (int bc = 0; bc < 9; bc += 3) {
+            int idx[9], p = 0;
+            for (int dr = 0; dr < 3; ++dr)
+                for (int dc = 0; dc < 3; ++dc)
+                    idx[p++] = (br + dr) * 9 + (bc + dc);
+            handleUnit(idx);
+        }
+
+    if (changed)
+    {
+        logicalStats.data[LS_NAKED_TRIPLE][0]++;
+        logicalStats.data[LS_NAKED_TRIPLE][1] += localRemove;
+    }
+
+    return changed;
+}
+
+bool LogicalSolver::applyHiddenTriple(Sudoku& s)
+{
+    bool changed = false;
+    uint32_t localRemove = 0;
+
+    auto handleUnit = [&](const int idx[9]) {
+        uint16_t pos[10] = {};
+
+        for (int k = 0; k < 9; ++k)
+        {
+            int i = idx[k];
+            if (s.get(i / 9, i % 9) != UNASSIGNED) continue;
+
+            uint16_t m = s.getCandidates(i / 9, i % 9);
+            for (uint8_t d = 1; d <= 9; ++d)
+                if (m & bit(d))
+                    pos[d] |= (1u << k);
+        }
+
+        for (uint8_t a = 1; a <= 7; ++a)
+            for (uint8_t b = a + 1; b <= 8; ++b)
+                for (uint8_t c = b + 1; c <= 9; ++c)
+                {
+                    uint16_t cells = pos[a] | pos[b] | pos[c];
+                    if (std::popcount(cells) != 3) continue;
+
+                    // CRITICAL SAFETY CHECKS
+                    if (pos[a] == 0 || pos[b] == 0 || pos[c] == 0) continue;
+                    if ((pos[a] & cells) != pos[a]) continue;
+                    if ((pos[b] & cells) != pos[b]) continue;
+                    if ((pos[c] & cells) != pos[c]) continue;
+
+                    uint16_t keepMask = bit(a) | bit(b) | bit(c);
+
+                    for (int k = 0; k < 9; ++k)
+                    {
+                        if (!(cells & (1u << k))) continue;
+                        int i = idx[k];
+
+                        if (s.removeCandidatesMask(i / 9, i % 9, ~keepMask))
+                        {
+                            changed = true;
+                            ++localRemove;
+                        }
+                    }
+                }
+        };
+
+    // rows
+    for (int r = 0; r < 9; ++r) {
+        int idx[9];
+        for (int c = 0; c < 9; ++c) idx[c] = r * 9 + c;
+        handleUnit(idx);
+    }
+
+    // columns
+    for (int c = 0; c < 9; ++c) {
+        int idx[9];
+        for (int r = 0; r < 9; ++r) idx[r] = r * 9 + c;
+        handleUnit(idx);
+    }
+
+    // boxes
+    for (int br = 0; br < 9; br += 3)
+        for (int bc = 0; bc < 9; bc += 3)
+        {
+            int idx[9], p = 0;
+            for (int dr = 0; dr < 3; ++dr)
+                for (int dc = 0; dc < 3; ++dc)
+                    idx[p++] = (br + dr) * 9 + (bc + dc);
+            handleUnit(idx);
+        }
+
+    if (changed)
+    {
+        logicalStats.data[LS_HIDDEN_TRIPLE][0]++;
+        logicalStats.data[LS_HIDDEN_TRIPLE][1] += localRemove;
+    }
+
     return changed;
 }

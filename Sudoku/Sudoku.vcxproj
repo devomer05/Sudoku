@@ -54,6 +54,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.9.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -132,6 +133,7 @@
   <ItemGroup>
     <ClCompile Include="BacktrackingSolver.cpp" />
     <ClCompile Include="BacktrackingSolverMRV.cpp" />
+    <ClCompile Include="CUDASolver.cpp" />
     <ClCompile Include="DatasetLoader.cpp" />
     <ClCompile Include="LogicalSolver.cpp" />
     <ClCompile Include="LogicalSolverSIMD.cpp" />
@@ -142,6 +144,7 @@
   <ItemGroup>
     <ClInclude Include="BacktrackingSolver.h" />
     <ClInclude Include="BacktrackingSolverMRV.h" />
+    <ClInclude Include="CUDASolver.h" />
     <ClInclude Include="DatasetLoader.h" />
     <ClInclude Include="ISudokuSolver.h" />
     <ClInclude Include="LogicalSolver.h" />
@@ -150,7 +153,19 @@
     <ClInclude Include="simd_utils.h" />
     <ClInclude Include="Sudoku.h" />
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="CUDASolver.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </CudaCompile>
+    <CudaCompile Include="cuda_sanity_info.cu">
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </CudaCompile>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.9.targets" />
   </ImportGroup>
 </Project>

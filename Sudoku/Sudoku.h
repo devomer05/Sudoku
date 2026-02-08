@@ -46,7 +46,12 @@ public:
 	}
 	~Sudoku(){}
 
+	const uint8_t* rawGrid() const { return data; }
+	uint8_t* rawGridMutable() { return data; }
+
 	const uint16_t* candidatesData() const { return candidates; }
+	uint16_t* rawCandidatesMutable() { return candidates; }
+
 
 	void set(uint8_t x, uint8_t y, uint8_t val);
 	uint8_t get(uint8_t x, uint8_t y) const;

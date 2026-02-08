@@ -9,6 +9,9 @@
 #include "LogicalSolver.h"
 #include "LogicalSolverSIMD.h"
 #include "ParallelSolver.h"
+#include "CUDASolver.h"
+
+extern "C" void runCudaSanity();
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -17,7 +20,7 @@ using Clock = std::chrono::high_resolution_clock;
    ============================================================ */
 static const bool RUN_SEQUENTIAL = true;
 static const bool RUN_PARALLEL = false;
-static const bool RUN_COMPARE = false;
+static const bool RUN_COMPARE = true;
 static const size_t MAX_SUDOKU_PER_DATASET = 250;
 static const int  THREAD_COUNT = 20;
 
@@ -135,6 +138,10 @@ static void runSolver(
             << " effect=" << st.data[4][1] << "\n";
         std::cout << "HiddenPair         : hit=" << st.data[5][0]
             << " effect=" << st.data[5][1] << "\n";
+		std::cout << "NakedTriple        : hit=" << st.data[6][0]
+			<< " effect=" << st.data[6][1] << "\n";
+		std::cout << "HiddenTriple       : hit=" << st.data[7][0]
+			<< " effect=" << st.data[7][1] << "\n";
     }
 }
 
@@ -143,19 +150,26 @@ static void runSolver(
    ============================================================ */
 int main()
 {
-    /*
-    // Single Sudoku sanity test (AYNEN KALIR)
-
-    Sudoku s;
-    s.loadFromFile("hardest1.txt");
-    LogicalSolver solver;
-    solver.solve(s);
-    std::cout << s << std::endl;
-    return 0;
-    */
+	runCudaSanity();
 
     std::vector<std::vector<Sudoku>> baseDatasets =
         DatasetLoader::loadAllDatasets("Dataset");
+
+    std::vector<std::vector<Sudoku>> copy = baseDatasets;
+
+    Clock::time_point t0 = Clock::now();
+
+    CUDASolver cuda;
+    cuda.solve(copy);
+    Clock::time_point t1 = Clock::now();
+
+    long long elapsedMs =
+        std::chrono::duration_cast<
+        std::chrono::milliseconds>(t1 - t0).count();
+
+    std::cout << "[CUDA Solver] Total time: "
+        << elapsedMs << " ms\n";
+
 
     std::vector<std::vector<Sudoku>> groundTruth;
     std::vector<std::vector<Sudoku>> toTest;
@@ -198,6 +212,7 @@ int main()
         }
     }
 
+	toTest = copy; // CUDA sonuçlarýný karþýlaþtýrmak için
     if (RUN_COMPARE && !groundTruth.empty() && !toTest.empty())
     {
         bool allSame = true;
